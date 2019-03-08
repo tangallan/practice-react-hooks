@@ -19,8 +19,28 @@ const todo = (props) => {
 
                 setTodoList(todos);
             });
-    }, []); //if used [todoName], the use effect function will run whenever todoName is changed
+
+        // clean up??
+        return () => {
+            console.log('Cleanup');
+        };
+    }, []); 
+    // if dont have a second argument, it will run everytime the component gets updated
+    //if used [todoName], the use effect function will run whenever todoName is changed
     // if provided by [], it runs only once acting like componentDidMount()
+
+    const mouseMoveHandler = (evt) => {
+        console.log(evt.clientX, evt.clientY);
+    };
+
+    useEffect(() => {
+        document.addEventListener('mousemove', mouseMoveHandler);
+
+        // clean up to remove event listener 
+        return () => {
+            document.removeEventListener('mousemove', mouseMoveHandler);
+        };
+    }, []);
 
     // NO AUTOMATIC MERGE
     // const [todoState, setTodoState] = useState({
