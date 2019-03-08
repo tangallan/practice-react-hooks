@@ -2,12 +2,14 @@ import React, { useState, useEffect, useReducer, useRef, useMemo } from 'react';
 import axios from 'axios';
 
 import List from './List';
+import { useFormInput } from './hooks/forms';
 
 const todo = (props) => {
     // const [todoName, setTodoName] = useState('');
     // const [submittedTodo, setSubmittedTodo] = useState(null);
     // const [todoList, setTodoList] = useState([]);
-    const [inputIsValid, setInputIsValid] = useState(false);
+    // const [inputIsValid, setInputIsValid] = useState(false);
+    const {value: inputValue, onChange: onChangeInput, validity: inputValidity} = useFormInput();
 
     const todoListReducer = (state, action) => {
         switch (action.type) {
@@ -84,13 +86,17 @@ const todo = (props) => {
     //     // });
     // };
 
-    const inputValidationHandler = (evt) => {
-        if(evt.target.value.trim() === '') {
-            setInputIsValid(false);
-        } else {
-            setInputIsValid(true);
-        }
-    };
+    // const inputValidationHandler = (evt) => {
+    //     if(evt.target.value.trim() === '') {
+    //         setInputIsValid(false);
+    //     } else {
+    //         setInputIsValid(true);
+    //     }
+    // };
+
+    const inputChangeHandler = (evt) => {
+        onChangeInput(evt);
+    }
 
     const todoAddHandler = () => {
         // setTodoState({
@@ -98,7 +104,8 @@ const todo = (props) => {
         //     userInput: '',
         // //     todoList: [...todoState.todoList, todoState.userInput]
         // });
-        const todoName = todoInputElRef.current.value;
+        // const todoName = todoInputElRef.current.value;
+        const todoName = inputValue;
         axios.post('https://practice-project-6130e.firebaseio.com/todos.json', { name: todoName })
             .then(res => {
                 // console.log(res);
@@ -141,9 +148,9 @@ const todo = (props) => {
     return <React.Fragment>
         <input type="text" placeholder="Enter Todo" 
             // onChange={onTodoNameHandler} value={todoName} 
-            onChange={inputValidationHandler}
+            onChange={inputChangeHandler}
             ref={todoInputElRef}
-            style={{backgroundColor: inputIsValid ? 'transparent': 'red'}}
+            style={{backgroundColor: inputValidity ? 'transparent': 'red'}}
         />
         <button type="button" onClick={todoAddHandler}>Add</button>
 
