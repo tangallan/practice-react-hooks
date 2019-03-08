@@ -1,9 +1,27 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useReducer, useRef } from 'react';
 import axios from 'axios';
 
 const todo = (props) => {
-    const [todoName, setTodoName] = useState('');
-    const [todoList, setTodoList] = useState([]);
+    // const [todoName, setTodoName] = useState('');
+    // const [submittedTodo, setSubmittedTodo] = useState(null);
+    // const [todoList, setTodoList] = useState([]);
+
+    const todoListReducer = (state, action) => {
+        switch (action.type) {
+            case 'SET':
+                return action.payload;
+            case 'ADD':
+                return state.concat(action.payload);
+            case 'REMOVE':
+                return state.filter(todo => todo.id !== action.payload.id);
+            default:
+                return state;
+        }
+    };
+
+    const [todoList, dispatch] = useReducer(todoListReducer, []);
+
+    const todoInputElRef = useRef();
 
     // hooks with react internals
     // infiite loop? - runs after every render cycle
@@ -17,7 +35,8 @@ const todo = (props) => {
                     todos.push({ id: key, name: todoData[key].name });
                 }
 
-                setTodoList(todos);
+                // setTodoList(todos);
+                dispatch({ type: 'SET', payload: todos});
             });
 
         // clean up??
@@ -42,43 +61,82 @@ const todo = (props) => {
         };
     }, []);
 
+    // useEffect(() => {
+    //     if (submittedTodo) {
+    //         // setTodoList(todoList.concat(submittedTodo));
+    //         dispatch({ type: 'ADD', payload: submittedTodo});
+    //     }
+    // }, [submittedTodo]);
+
     // NO AUTOMATIC MERGE
     // const [todoState, setTodoState] = useState({
     //     userInput: '',
     //     todoList: []
     // });
 
-    const onTodoNameHandler = (evt) => {
-        setTodoName(evt.target.value);
-        // setTodoState({
-        //     ...todoState,
-        //     userInput: evt.target.value
-        // });
-    };
+    // const onTodoNameHandler = (evt) => {
+    //     setTodoName(evt.target.value);
+    //     // setTodoState({
+    //     //     ...todoState,
+    //     //     userInput: evt.target.value
+    //     // });
+    // };
 
     const todoAddHandler = () => {
-        setTodoList([...todoList, todoName]);
-        setTodoName('');
         // setTodoState({
         //     ...todoState,
         //     userInput: '',
         // //     todoList: [...todoState.todoList, todoState.userInput]
         // });
+        const todoName = todoInputElRef.current.value;
         axios.post('https://practice-project-6130e.firebaseio.com/todos.json', { name: todoName })
             .then(res => {
                 console.log(res);
+                const newTodo = {
+                    name: todoName,
+                    id: res.data.name
+                };
+                // setTodoList([...todoList, {
+                //     name: todoName,
+                //     id: res.data.name
+                // }]);
+                // setTodoName('');
+
+                // helps with mutliple load insert
+                // setSubmittedTodo({
+                //     name: todoName,
+                //     id: res.data.name
+                // });
+
+                // using reducers
+                dispatch({ type: 'ADD', payload: newTodo });
+                // setTodoName('');
+                todoInputElRef.current.value = '';
             })
             .catch(err => {
                 console.log(err);
             });
     };
 
+    const todoRemoveHandler = (id) => {
+        axios.delete(`https://practice-project-6130e.firebaseio.com/todos/${id}.json`)
+            .then((res) => {
+                dispatch({ type: 'REMOVE', payload: { id: id }});
+            })
+            .catch(err => {
+                console.log('Failed to delete', err);
+            });
+    }
+
     return <React.Fragment>
-        <input type="text" placeholder="Enter Todo" onChange={onTodoNameHandler} value={todoName} />
+        <input type="text" placeholder="Enter Todo" 
+            // onChange={onTodoNameHandler} value={todoName} 
+            ref={todoInputElRef}
+        />
         <button type="button" onClick={todoAddHandler}>Add</button>
 
         <ul>
-            {todoList.map((m,i) => <li key={m.id}>{m.name}</li>)}
+            {todoList.map((m,i) => <li key={m.id} onClick={() => todoRemoveHandler(m.id)}>{m.name}</li>)}
         </ul>
     </React.Fragment>
 };
